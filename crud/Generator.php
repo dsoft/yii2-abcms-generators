@@ -1,21 +1,31 @@
 <?php
 
-namespace abcms\library\generators\crud;
+namespace abcms\generators\crud;
 
 class Generator extends \yii\gii\generators\crud\Generator
 {
 
+    public $baseControllerClass = 'abcms\library\base\AdminController';
+
     /** @var array Possible names of attributes that should be generated as file fields **/
     public $fileAttributes = ['image', 'thumb', 'thumbnail', 'logo'];
-    
+
     /** @var array Possible names of attributes that should be displayed as images **/
     public $imagesAttributes = ['image', 'thumb', 'thumbnail', 'logo'];
-    
+
     /** @var array Possible names of attributes that should be ignored in view, index and search views **/
     public $ignoreAttributes = ['deleted'];
-    
+
     /** @var string Field used to save active status **/
     public $activeAttribute = 'active';
+
+    /**
+     * @inheritdoc
+     */
+    public function getName()
+    {
+        return 'ABCMS CRUD Generator';
+    }
 
     /**
      * @inheritdoc
@@ -46,7 +56,7 @@ class Generator extends \yii\gii\generators\crud\Generator
         }
         return $result;
     }
-    
+
     /**
      * Check if model has active field
      * @return boolean

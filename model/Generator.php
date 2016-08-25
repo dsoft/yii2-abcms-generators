@@ -1,27 +1,27 @@
 <?php
 
-namespace abcms\library\generators\model;
+namespace abcms\generators\model;
 
 use yii\db\Schema;
 use yii\base\NotSupportedException;
 
 class Generator extends \yii\gii\generators\model\Generator
 {
-    
+
     /**
      * @var array The attributes that should be ignored in the rules generation
      */
     public $ignoreAttributes = [
             'time', 'deleted'
         ];
-    
+
     /**
      * @var array Possible names for images attributes
      */
     public $imagesAttributes = [
             'image', 'thumb', 'thumbnail', 'logo'
         ];
-    
+
     /**
      *
      * @var array Posiible name of attributes that should be translated
@@ -29,12 +29,53 @@ class Generator extends \yii\gii\generators\model\Generator
      */
     public $translationAttributes = [
         'title'=>'title',
-        'description'=>'description:text-editor', 
+        'description'=>'description:text-editor',
         'name'=>'name',
         'smallDescription'=>'smallDescription',
         'question'=>'question',
         'answer'=>'answer:text-editor'
     ];
+
+    /**
+     * @inheritdoc
+     */
+    public function getName()
+    {
+        return 'ABCMS Model Generator';
+    }
+
+    /**
+     * Returns images attributes for certain table.
+     * Compare table attributes to [[imagesAttributes]] attribute
+     * @param \yii\db\TableSchema $table
+     * @return array
+     */
+    public function imagesAttributes($table){
+        $array = [];
+        foreach($table->columnNames as $name){
+            if(in_array($name, $this->imagesAttributes)){
+                $array[] = $name;
+            }
+        }
+        return $array;
+    }
+
+    /**
+     * Returns translation attributes for certain table.
+     * Compare table attributes to [[translationAttributes]] keys
+     * @param \yii\db\TableSchema $table
+     * @return array
+     */
+    public function translationAttributes($table){
+        $array = [];
+        $attributes = $this->translationAttributes;
+        foreach($table->columnNames as $name){
+            if(key_exists($name, $attributes)){
+                $array[$name] = $attributes[$name];
+            }
+        }
+        return $array;
+    }
 
     /**
      * @inheritdoc
@@ -63,7 +104,7 @@ class Generator extends \yii\gii\generators\model\Generator
                     $types['boolean'][] = $column->name;
                     break;
                 case Schema::TYPE_FLOAT:
-                case Schema::TYPE_DOUBLE:
+                case 'double': // Schema::TYPE_DOUBLE, which is available since Yii 2.0.3
                 case Schema::TYPE_DECIMAL:
                 case Schema::TYPE_MONEY:
                     $types['number'][] = $column->name;
@@ -90,22 +131,23 @@ class Generator extends \yii\gii\generators\model\Generator
             $rules[] = "[['" . implode("', '", $columns) . "'], 'string', 'max' => $length]";
         }
 
+        $db = $this->getDbConnection();
+
         // Unique indexes rules
         try {
-            $db = $this->getDbConnection();
             $uniqueIndexes = $db->getSchema()->findUniqueIndexes($table);
             foreach ($uniqueIndexes as $uniqueColumns) {
                 // Avoid validating auto incremental columns
                 if (!$this->isColumnAutoIncremental($table, $uniqueColumns)) {
                     $attributesCount = count($uniqueColumns);
 
-                    if ($attributesCount == 1) {
+                    if ($attributesCount === 1) {
                         $rules[] = "[['" . $uniqueColumns[0] . "'], 'unique']";
                     } elseif ($attributesCount > 1) {
                         $labels = array_intersect_key($this->generateLabels($table), array_flip($uniqueColumns));
                         $lastLabel = array_pop($labels);
                         $columnsList = implode("', '", $uniqueColumns);
-                        $rules[] = "[['" . $columnsList . "'], 'unique', 'targetAttribute' => ['" . $columnsList . "'], 'message' => 'The combination of " . implode(', ', $labels) . " and " . $lastLabel . " has already been taken.']";
+                        $rules[] = "[['$columnsList'], 'unique', 'targetAttribute' => ['$columnsList'], 'message' => 'The combination of " . implode(', ', $labels) . " and $lastLabel has already been taken.']";
                     }
                 }
             }
@@ -113,40 +155,27 @@ class Generator extends \yii\gii\generators\model\Generator
             // doesn't support unique indexes information...do nothing
         }
 
+        // Exist rules for foreign keys
+        foreach ($table->foreignKeys as $refs) {
+            $refTable = $refs[0];
+            $refTableSchema = $db->getTableSchema($refTable);
+            if ($refTableSchema === null) {
+                // Foreign key could point to non-existing table: https://github.com/yiisoft/yii2-gii/issues/34
+                continue;
+            }
+            $refClassName = $this->generateClassName($refTable);
+            unset($refs[0]);
+            $attributes = implode("', '", array_keys($refs));
+            $targetAttributes = [];
+            foreach ($refs as $key => $value) {
+                $targetAttributes[] = "'$key' => '$value'";
+            }
+            $targetAttributes = implode(', ', $targetAttributes);
+            $rules[] = "[['$attributes'], 'exist', 'skipOnError' => true, 'targetClass' => $refClassName::className(), 'targetAttribute' => [$targetAttributes]]";
+        }
+
         return $rules;
     }
-    
-    /**
-     * Returns images attributes for certain table.
-     * Compare table attributes to [[imagesAttributes]] attribute
-     * @param \yii\db\TableSchema $table
-     * @return array
-     */
-    public function imagesAttributes($table){
-        $array = [];
-        foreach($table->columnNames as $name){
-            if(in_array($name, $this->imagesAttributes)){
-                $array[] = $name;
-            }
-        }
-        return $array;
-    }
-    
-    /**
-     * Returns translation attributes for certain table.
-     * Compare table attributes to [[translationAttributes]] keys
-     * @param \yii\db\TableSchema $table
-     * @return array
-     */
-    public function translationAttributes($table){
-        $array = [];
-        $attributes = $this->translationAttributes;
-        foreach($table->columnNames as $name){
-            if(key_exists($name, $attributes)){
-                $array[$name] = $attributes[$name];
-            }
-        }
-        return $array;
-    }
+
 
 }
