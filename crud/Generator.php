@@ -8,10 +8,10 @@ class Generator extends \yii\gii\generators\crud\Generator
     public $baseControllerClass = 'abcms\library\base\AdminController';
 
     /** @var array Possible names of attributes that should be generated as file fields **/
-    public $fileAttributes = ['image', 'thumb', 'thumbnail', 'logo'];
+    public $fileAttributes = ['image', 'thumb', 'thumbnail', 'logo', 'background', 'image1', 'image2'];
 
     /** @var array Possible names of attributes that should be displayed as images **/
-    public $imagesAttributes = ['image', 'thumb', 'thumbnail', 'logo'];
+    public $imagesAttributes = ['image', 'thumb', 'thumbnail', 'logo', 'background', 'image1', 'image2'];
 
     /** @var array Possible names of attributes that should be ignored in view, index and search views **/
     public $ignoreAttributes = ['deleted'];

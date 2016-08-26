@@ -38,15 +38,16 @@ use yii\data\ActiveDataProvider;
 <?php endif; ?>
 use <?= ltrim($generator->baseControllerClass, '\\') ?>;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
 /**
  * <?= $controllerClass ?> implements the CRUD actions for <?= $modelClass ?> model.
  */
 class <?= $controllerClass ?> extends <?= StringHelper::basename($generator->baseControllerClass) . "\n" ?>
 {
-
+    
+<?php if($generator->hasFiles()): ?>
     public $createScenario = 'create';
+<?php endif; ?>
 
 <?php if($generator->hasActiveField()): ?>
     /**
@@ -109,7 +110,7 @@ class <?= $controllerClass ?> extends <?= StringHelper::basename($generator->bas
     public function actionCreate()
     {
         $model = new <?= $modelClass ?>();
-        if($this->createScenario) {
+        if(isset($this->createScenario)) {
             $model->scenario = $this->createScenario;
         }
         $model->loadDefaultValues();
