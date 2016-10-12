@@ -73,9 +73,8 @@ class <?= $searchModelClass ?> extends <?= isset($modelAlias) ? $modelAlias : $m
                 'defaultOrder' => [
 <?php if($generator->hasField('ordering')): ?>
                     'ordering' => SORT_ASC,
-<?php else: ?>
-                    'id' => SORT_ASC,
 <?php endif; ?>
+                    'id' => SORT_DESC,
                 ]
             ]
         ]);

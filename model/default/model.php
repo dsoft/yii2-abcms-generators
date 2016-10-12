@@ -16,6 +16,7 @@
 echo "<?php\n";
 $imagesAttributes = $generator->imagesAttributes($tableSchema);
 $translationAttributes = $generator->translationAttributes($tableSchema);
+$hasTimeAttribute = $generator->hasField('time', $tableSchema);
 ?>
 
 namespace <?= $generator->ns ?>;
@@ -23,6 +24,9 @@ namespace <?= $generator->ns ?>;
 use Yii;
 <?php if($imagesAttributes): ?>
 use abcms\library\behaviors\ImageUploadBehavior;
+<?php endif; ?>
+<?php if($hasTimeAttribute): ?>
+use abcms\library\behaviors\TimeBehavior;
 <?php endif; ?>
 
 /**
@@ -91,6 +95,11 @@ foreach($imagesAttributes as $image): ?>
             ],
 <?php endforeach;
 endif; ?>
+<?php if($hasTimeAttribute): ?>
+            [
+                'class' => TimeBehavior::className(),
+            ],
+<?php endif; ?>
         ]);
     }
 <?php endif; ?>
