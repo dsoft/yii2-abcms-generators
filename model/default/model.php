@@ -75,7 +75,7 @@ class <?= $className ?> extends <?= '\\' . ltrim($generator->baseClass, '\\') . 
             return array_merge(parent::behaviors(), [
     <?php if($translationAttributes): ?>
                 [
-                    'class' => \abcms\multilanguage\ModelBehavior::className(),
+                    'class' => \abcms\multilanguage\behaviors\ModelBehavior::className(),
                     'attributes' => [
     <?php foreach($translationAttributes as $translation): ?>
                         '<?php echo $translation; ?>',
