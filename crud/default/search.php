@@ -69,6 +69,15 @@ class <?= $searchModelClass ?> extends <?= isset($modelAlias) ? $modelAlias : $m
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
+            'sort' => [
+                'defaultOrder' => [
+<?php if($generator->hasField('ordering')): ?>
+                    'ordering' => SORT_ASC,
+<?php else: ?>
+                    'id' => SORT_ASC,
+<?php endif; ?>
+                ]
+            ]
         ]);
 
         $this->load($params);

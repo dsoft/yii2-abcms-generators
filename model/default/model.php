@@ -66,34 +66,34 @@ class <?= $className ?> extends <?= '\\' . ltrim($generator->baseClass, '\\') . 
         return [<?= "\n            " . implode(",\n            ", $rules) . ",\n        " ?>];
     }
 
-    <?php if ($imagesAttributes || $translationAttributes): ?>
-        /**
-         * @inheritdoc
-         */
-        public function behaviors()
-        {
-            return array_merge(parent::behaviors(), [
-    <?php if($translationAttributes): ?>
-                [
-                    'class' => \abcms\multilanguage\behaviors\ModelBehavior::className(),
-                    'attributes' => [
-    <?php foreach($translationAttributes as $translation): ?>
-                        '<?php echo $translation; ?>',
-    <?php endforeach; ?>
-                    ],
+<?php if ($imagesAttributes || $translationAttributes): ?>
+    /**
+     * @inheritdoc
+     */
+    public function behaviors()
+    {
+        return array_merge(parent::behaviors(), [
+<?php if($translationAttributes): ?>
+            [
+                'class' => \abcms\multilanguage\behaviors\ModelBehavior::className(),
+                'attributes' => [
+<?php foreach($translationAttributes as $translation): ?>
+                    '<?php echo $translation; ?>',
+<?php endforeach; ?>
                 ],
-    <?php endif; ?>
-    <?php if($imagesAttributes):
-        foreach($imagesAttributes as $image): ?>
-                [
-                    'class' => ImageUploadBehavior::className(),
-                    'attribute' => '<?php echo $image; ?>',
-                ],
-    <?php endforeach;
-        endif; ?>
-            ]);
-        }
-    <?php endif; ?>
+            ],
+<?php endif; ?>
+<?php if($imagesAttributes):
+foreach($imagesAttributes as $image): ?>
+            [
+                'class' => ImageUploadBehavior::className(),
+                'attribute' => '<?php echo $image; ?>',
+            ],
+<?php endforeach;
+endif; ?>
+        ]);
+    }
+<?php endif; ?>
 
     /**
      * @inheritdoc

@@ -7,16 +7,16 @@ class Generator extends \yii\gii\generators\crud\Generator
 
     public $baseControllerClass = 'abcms\library\base\AdminController';
 
-    /** @var array Possible names of attributes that should be generated as file fields **/
+    /** @var array Possible names of attributes that should be generated as file fields * */
     public $fileAttributes = ['image', 'thumb', 'thumbnail', 'logo', 'background', 'image1', 'image2'];
 
-    /** @var array Possible names of attributes that should be displayed as images **/
+    /** @var array Possible names of attributes that should be displayed as images * */
     public $imagesAttributes = ['image', 'thumb', 'thumbnail', 'logo', 'background', 'image1', 'image2'];
 
-    /** @var array Possible names of attributes that should be ignored in view, index and search views **/
+    /** @var array Possible names of attributes that should be ignored in view, index and search views * */
     public $ignoreAttributes = ['deleted'];
 
-    /** @var string Field used to save active status **/
+    /** @var string Field used to save active status * */
     public $activeAttribute = 'active';
 
     /**
@@ -63,10 +63,20 @@ class Generator extends \yii\gii\generators\crud\Generator
      */
     public function hasActiveField()
     {
+        return $this->hasField($this->activeAttribute);
+    }
+
+    /**
+     * Return if the model has a ceratin field
+     * @param string $fieldName
+     * @return boolean
+     */
+    public function hasField($fieldName)
+    {
         $result = FALSE;
         $names = $this->getColumnNames();
         foreach($names as $name) {
-            if($name == $this->activeAttribute) {
+            if($name == $fieldName) {
                 return TRUE;
             }
         }
