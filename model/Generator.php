@@ -12,7 +12,7 @@ class Generator extends \yii\gii\generators\model\Generator
      * @var array The attributes that should be ignored in the rules generation
      */
     public $ignoreAttributes = [
-        'time', 'deleted'
+        'time', 'deleted', 'ipAddress'
     ];
 
     /**
@@ -40,6 +40,11 @@ class Generator extends \yii\gii\generators\model\Generator
      * @var string time attribute name
      */
     public $timeAttribute = 'time';
+    
+    /**
+     * @var string ip address attribute name
+     */
+    public $ipAddressAttribute = 'ipAddress';
 
     /**
      * @inheritdoc

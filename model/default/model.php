@@ -16,7 +16,8 @@
 echo "<?php\n";
 $imagesAttributes = $generator->imagesAttributes($tableSchema);
 $translationAttributes = $generator->translationAttributes($tableSchema);
-$hasTimeAttribute = $generator->hasField('time', $tableSchema);
+$hasTimeAttribute = $generator->hasField($generator->timeAttribute, $tableSchema);
+$hasIpAttribute = $generator->hasField($generator->ipAddressAttribute, $tableSchema);
 ?>
 
 namespace <?= $generator->ns ?>;
@@ -27,6 +28,9 @@ use abcms\library\behaviors\ImageUploadBehavior;
 <?php endif; ?>
 <?php if($hasTimeAttribute): ?>
 use abcms\library\behaviors\TimeBehavior;
+<?php endif; ?>
+<?php if($hasIpAttribute): ?>
+use abcms\library\behaviors\IpAddressBehavior;
 <?php endif; ?>
 
 /**
@@ -70,7 +74,7 @@ class <?= $className ?> extends <?= '\\' . ltrim($generator->baseClass, '\\') . 
         return [<?= "\n            " . implode(",\n            ", $rules) . ",\n        " ?>];
     }
 
-<?php if ($imagesAttributes || $translationAttributes): ?>
+<?php if ($imagesAttributes || $translationAttributes || $hasTimeAttribute || $hasIpAttribute): ?>
     /**
      * @inheritdoc
      */
@@ -98,6 +102,11 @@ endif; ?>
 <?php if($hasTimeAttribute): ?>
             [
                 'class' => TimeBehavior::className(),
+            ],
+<?php endif; ?>
+<?php if($hasIpAttribute): ?>
+            [
+                'class' => IpAddressBehavior::className(),
             ],
 <?php endif; ?>
         ]);
