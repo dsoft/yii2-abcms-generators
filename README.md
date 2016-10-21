@@ -2,7 +2,7 @@
 
 ## Installation
 ```bash
-composer require abcms/yii2-generators:dev-master
+composer require abcms/yii2-generators
 ```
 ## Configuration
 Add generators to your config file inside config `$config['modules']['gii']` array.
