@@ -9,6 +9,7 @@
 /* @var $className string class name */
 /* @var $queryClassName string query class name */
 /* @var $tableSchema yii\db\TableSchema */
+/* @var $properties array list of properties (property => [type, name. comment]) */
 /* @var $labels string[] list of attribute labels (name => label) */
 /* @var $rules string[] list of validation rules */
 /* @var $relations array list of relations (name => relation declaration) */
@@ -36,8 +37,8 @@ use abcms\library\behaviors\IpAddressBehavior;
 /**
  * This is the model class for table "<?= $generator->generateTableName($tableName) ?>".
  *
-<?php foreach ($tableSchema->columns as $column): ?>
- * @property <?= "{$column->phpType} \${$column->name}\n" ?>
+<?php foreach ($properties as $property => $data): ?>
+ * @property <?= "{$data['type']} \${$property}"  . ($data['comment'] ? ' ' . strtr($data['comment'], ["\n" => ' ']) : '') . "\n" ?>
 <?php endforeach; ?>
 <?php if (!empty($relations)): ?>
  *
@@ -49,7 +50,7 @@ use abcms\library\behaviors\IpAddressBehavior;
 class <?= $className ?> extends <?= '\\' . ltrim($generator->baseClass, '\\') . "\n" ?>
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public static function tableName()
     {
@@ -67,16 +68,16 @@ class <?= $className ?> extends <?= '\\' . ltrim($generator->baseClass, '\\') . 
 <?php endif; ?>
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function rules()
     {
-        return [<?= "\n            " . implode(",\n            ", $rules) . ",\n        " ?>];
+        return [<?= empty($rules) ? '' : ("\n            " . implode(",\n            ", $rules) . ",\n        ") ?>];
     }
-
+    
 <?php if ($imagesAttributes || $translationAttributes || $hasTimeAttribute || $hasIpAttribute): ?>
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function behaviors()
     {
@@ -114,7 +115,7 @@ endif; ?>
 <?php endif; ?>
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function attributeLabels()
     {
@@ -127,7 +128,9 @@ endif; ?>
 <?php foreach ($relations as $name => $relation): ?>
 
     /**
-     * @return \yii\db\ActiveQuery
+     * Gets query for [[<?= $name ?>]].
+     *
+     * @return <?= $relationsClassHints[$name] . "\n" ?>
      */
     public function get<?= $name ?>()
     {
@@ -140,7 +143,7 @@ endif; ?>
     echo "\n";
 ?>
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      * @return <?= $queryClassFullName ?> the active query used by this AR class.
      */
     public static function find()

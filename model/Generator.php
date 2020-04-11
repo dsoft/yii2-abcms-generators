@@ -19,7 +19,7 @@ class Generator extends \yii\gii\generators\model\Generator
      * @var array Possible names for images attributes
      */
     public $imagesAttributes = [
-        'image', 'thumb', 'thumbnail', 'logo'
+        'image', 'thumb', 'thumbnail', 'logo', 'background', 'image1', 'image2'
     ];
 
     /**
@@ -47,11 +47,20 @@ class Generator extends \yii\gii\generators\model\Generator
     public $ipAddressAttribute = 'ipAddress';
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getName()
     {
         return 'ABCMS Model Generator';
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function formView()
+    {
+        $class = new \ReflectionClass('\yii\gii\generators\model\Generator');
+        return dirname($class->getFileName()) . '/form.php';
     }
 
     /**
@@ -90,33 +99,34 @@ class Generator extends \yii\gii\generators\model\Generator
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function generateRules($table)
     {
         $types = [];
         $lengths = [];
-        foreach($table->columns as $column) {
-            if($column->autoIncrement) {
+        foreach ($table->columns as $column) {
+            if ($column->autoIncrement) {
                 continue;
             }
             if(in_array($column->name, $this->ignoreAttributes) || in_array($column->name, $this->imagesAttributes)) {
                 continue;
             }
-            if(!$column->allowNull && $column->defaultValue === null) {
+            if (!$column->allowNull && $column->defaultValue === null) {
                 $types['required'][] = $column->name;
             }
-            switch($column->type) {
+            switch ($column->type) {
                 case Schema::TYPE_SMALLINT:
                 case Schema::TYPE_INTEGER:
                 case Schema::TYPE_BIGINT:
+                case Schema::TYPE_TINYINT:
                     $types['integer'][] = $column->name;
                     break;
                 case Schema::TYPE_BOOLEAN:
                     $types['boolean'][] = $column->name;
                     break;
                 case Schema::TYPE_FLOAT:
-                case 'double': // Schema::TYPE_DOUBLE, which is available since Yii 2.0.3
+                case Schema::TYPE_DOUBLE:
                 case Schema::TYPE_DECIMAL:
                 case Schema::TYPE_MONEY:
                     $types['number'][] = $column->name;
@@ -125,55 +135,57 @@ class Generator extends \yii\gii\generators\model\Generator
                 case Schema::TYPE_TIME:
                 case Schema::TYPE_DATETIME:
                 case Schema::TYPE_TIMESTAMP:
+                case Schema::TYPE_JSON:
                     $types['safe'][] = $column->name;
                     break;
                 default: // strings
-                    if($column->size > 0) {
+                    if ($column->size > 0) {
                         $lengths[$column->size][] = $column->name;
-                    }
-                    else {
+                    } else {
                         $types['string'][] = $column->name;
                     }
             }
         }
         $rules = [];
-        foreach($types as $type => $columns) {
-            $rules[] = "[['".implode("', '", $columns)."'], '$type']";
+        $driverName = $this->getDbDriverName();
+        foreach ($types as $type => $columns) {
+            if ($driverName === 'pgsql' && $type === 'integer') {
+                $rules[] = "[['" . implode("', '", $columns) . "'], 'default', 'value' => null]";
+            }
+            $rules[] = "[['" . implode("', '", $columns) . "'], '$type']";
         }
-        foreach($lengths as $length => $columns) {
-            $rules[] = "[['".implode("', '", $columns)."'], 'string', 'max' => $length]";
+        foreach ($lengths as $length => $columns) {
+            $rules[] = "[['" . implode("', '", $columns) . "'], 'string', 'max' => $length]";
         }
 
         $db = $this->getDbConnection();
 
         // Unique indexes rules
         try {
-            $uniqueIndexes = $db->getSchema()->findUniqueIndexes($table);
-            foreach($uniqueIndexes as $uniqueColumns) {
+            $uniqueIndexes = array_merge($db->getSchema()->findUniqueIndexes($table), [$table->primaryKey]);
+            $uniqueIndexes = array_unique($uniqueIndexes, SORT_REGULAR);
+            foreach ($uniqueIndexes as $uniqueColumns) {
                 // Avoid validating auto incremental columns
-                if(!$this->isColumnAutoIncremental($table, $uniqueColumns)) {
+                if (!$this->isColumnAutoIncremental($table, $uniqueColumns)) {
                     $attributesCount = count($uniqueColumns);
 
-                    if($attributesCount === 1) {
-                        $rules[] = "[['".$uniqueColumns[0]."'], 'unique']";
-                    }
-                    elseif($attributesCount > 1) {
-                        $labels = array_intersect_key($this->generateLabels($table), array_flip($uniqueColumns));
-                        $lastLabel = array_pop($labels);
+                    if ($attributesCount === 1) {
+                        $rules[] = "[['" . $uniqueColumns[0] . "'], 'unique']";
+                    } elseif ($attributesCount > 1) {
                         $columnsList = implode("', '", $uniqueColumns);
-                        $rules[] = "[['$columnsList'], 'unique', 'targetAttribute' => ['$columnsList'], 'message' => 'The combination of ".implode(', ', $labels)." and $lastLabel has already been taken.']";
+                        $rules[] = "[['$columnsList'], 'unique', 'targetAttribute' => ['$columnsList']]";
                     }
                 }
             }
-        }catch(NotSupportedException $e) {
+        } catch (NotSupportedException $e) {
             // doesn't support unique indexes information...do nothing
         }
 
         // Exist rules for foreign keys
-        foreach($table->foreignKeys as $refs) {
+        foreach ($table->foreignKeys as $refs) {
             $refTable = $refs[0];
             $refTableSchema = $db->getTableSchema($refTable);
-            if($refTableSchema === null) {
+            if ($refTableSchema === null) {
                 // Foreign key could point to non-existing table: https://github.com/yiisoft/yii2-gii/issues/34
                 continue;
             }
@@ -181,7 +193,7 @@ class Generator extends \yii\gii\generators\model\Generator
             unset($refs[0]);
             $attributes = implode("', '", array_keys($refs));
             $targetAttributes = [];
-            foreach($refs as $key => $value) {
+            foreach ($refs as $key => $value) {
                 $targetAttributes[] = "'$key' => '$value'";
             }
             $targetAttributes = implode(', ', $targetAttributes);
@@ -192,7 +204,7 @@ class Generator extends \yii\gii\generators\model\Generator
     }
 
     /**
-     * Return if the model has a ceratin field
+     * Return if the model has a certain field
      * @param string $fieldName
      * @param \yii\db\TableSchema $table
      * @return boolean

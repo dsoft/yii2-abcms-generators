@@ -20,15 +20,25 @@ class Generator extends \yii\gii\generators\crud\Generator
     public $activeAttribute = 'active';
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getName()
     {
         return 'ABCMS CRUD Generator';
     }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function formView()
+    {
+        $class = new \ReflectionClass('\yii\gii\generators\crud\Generator');
+        return dirname($class->getFileName()) . '/form.php';
+    }
+
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function generateActiveField($attribute)
     {
@@ -39,6 +49,18 @@ class Generator extends \yii\gii\generators\crud\Generator
             return "\$form->field(\$model, '$attribute')->fileInput()";
         }
         return parent::generateActiveField($attribute);
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function generateColumnFormat($column)
+    {
+        if ($column->name === 'active') {
+            return 'boolean';
+        }
+
+        return parent::generateColumnFormat($column);
     }
 
     /**
@@ -51,6 +73,22 @@ class Generator extends \yii\gii\generators\crud\Generator
         $names = $this->getColumnNames();
         foreach($names as $name) {
             if(in_array($name, $this->fileAttributes)) {
+                return TRUE;
+            }
+        }
+        return $result;
+    }
+    
+    /**
+     * Check if model has files attributes
+     * @return boolean
+     */
+    public function hasImages()
+    {
+        $result = FALSE;
+        $names = $this->getColumnNames();
+        foreach($names as $name) {
+            if(in_array($name, $this->imagesAttributes)) {
                 return TRUE;
             }
         }
